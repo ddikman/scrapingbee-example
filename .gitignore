@@ -1,0 +1,8 @@
+# environment variables
+.env*
+
+# node defaults
+node_modules/
+
+# outputs
+*.csv

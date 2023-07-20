@@ -1,0 +1,16 @@
+{
+  "name": "scrapingbee-example",
+  "version": "1.0.0",
+  "description": "An example of using Scrapingbee",
+  "main": "scrape.js",
+  "author": "David Dikman <ddikman@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node scrape.js"
+  },
+  "dependencies": {
+    "csv-stringify": "^6.4.0",
+    "dotenv": "^16.3.1",
+    "scrapingbee": "^1.7.4"
+  }
+}
