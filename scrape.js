@@ -12,10 +12,10 @@ if (!API_KEY) {
 }
 
 async function parseUrlWithRules(url, extractRules) {
-  var client = new scrapingbee.ScrapingBeeClient(API_KEY);
-  var decoder = new TextDecoder();
+  const client = new scrapingbee.ScrapingBeeClient(API_KEY);
+  const decoder = new TextDecoder();
   try {
-    var response = await client.get({
+    const response = await client.get({
       url: url,
       params: {
         render_js: false,
@@ -24,7 +24,7 @@ async function parseUrlWithRules(url, extractRules) {
     })
 
     // parse the response to text, then parse it to json
-    var text = decoder.decode(response.data);
+    const text = decoder.decode(response.data);
     return JSON.parse(text);
   } catch (err) {
     if (err.response) {
