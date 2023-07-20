@@ -20,8 +20,6 @@ To avoid using too many credits, a variable `SCRAPINGBEE_LIMIT_LEADS` can is def
 
 ## Script explanation
 
-Most of the script is in [scrape.js](./scrape.js). The storage of the csv is placed in the `lib/save-csv.js` file just to avoid cluttering the main script.
-
 The script parses the example site like this:
 
 1. Scrape the main landing page, getting all user ids
