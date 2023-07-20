@@ -6,12 +6,12 @@ The example site used is https://leads-example-page.vercel.app/.
 
 ## Running the example
 
-To run this example, you must first set your Scrapingbee API key as an environment variable or add a `.env` file.
+To run this example, you must first set your Scrapingbee API key as an environment variable or copy the `.env.example` to `.env` and update the variables inside.
 
 ```bash
 export SCRAPINGBEE_API_KEY="your key here"
-yarn install
-yarn start
+yarn install # or npm install
+yarn start # or npm start
 ```
 
 The scraped leads will be saved to an output csv file.

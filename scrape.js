@@ -24,8 +24,8 @@ async function parseUrlWithRules(url, extractRules) {
     })
 
     // parse the response to text, then parse it to json
-    var errorResponse = decoder.decode(response.data);
-    return JSON.parse(errorResponse);
+    var text = decoder.decode(response.data);
+    return JSON.parse(text);
   } catch (err) {
     if (err.response) {
       throw new Error(`Request failed [${response.statusText}]: ${url}`)

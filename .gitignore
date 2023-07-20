@@ -1,5 +1,5 @@
 # environment variables
-.env*
+.env
 
 # node defaults
 node_modules/
