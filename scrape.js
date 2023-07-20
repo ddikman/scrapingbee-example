@@ -1,113 +1,74 @@
-require('dotenv').config();
+require('dotenv').config()
 const scrapingbee = require('scrapingbee');
 const csv = require('csv-stringify/sync')
 const fs = require('fs/promises')
 
-const API_KEY = process.env.SCRAPINGBEE_API_KEY;
-
-const LIMIT_LEADS = process.env.SCRAPINGBEE_LIMIT_LEADS || 5
+const API_KEY = process.env.SCRAPINGBEE_API_KEY
 
 if (!API_KEY) {
-  console.error('Please set the SCRAPINGBEE_API_KEY environment variable.');
-  process.exit(1);
+  throw new Error('You need to set the SCRAPINGBEE_API_KEY environment variable or add it to a .env file to run this script')
 }
 
-async function parseUrlWithRules(url, extractRules) {
-  const client = new scrapingbee.ScrapingBeeClient(API_KEY);
-  const decoder = new TextDecoder();
-  try {
+const client = new scrapingbee.ScrapingBeeClient(API_KEY);
+
+(async () => {
+  const textDecoder = new TextDecoder()
+  const pageBaseUrl = 'https://leads-example-page.vercel.app/'
+
+  const userProfiles = []
+  let nextPage = pageBaseUrl
+  while (nextPage) {
     const response = await client.get({
-      url: url,
+      url: nextPage,
       params: {
         render_js: false,
-        extract_rules: extractRules
+        extract_rules: {
+          users: {
+            selector: ".user-id",
+            type: "list"
+          },
+          nextPage: "a.next-page@href"
+        }
       },
     })
 
-    // parse the response to text, then parse it to json
-    const text = decoder.decode(response.data);
-    return JSON.parse(text);
-  } catch (err) {
-    if (err.response) {
-      throw new Error(`Request failed [${response.statusText}]: ${url}`)
-    }
-    throw err
-  }
-}
+    const data = JSON.parse(textDecoder.decode(response.data))
 
-async function parseListPage(url) {
-  const extractRules = {
-    users: {
-      selector: '.user-id',
-      type: 'list'
-    },
-    nextPage: 'a.next-page@href',
-  }
-  const pageData = await parseUrlWithRules(url, extractRules)
+    // only if there is a next page, set it, otherwise set it to null, breaking the loop
+    nextPage = data.nextPage ? 'https://leads-example-page.vercel.app/' + data.nextPage : null
 
-  // clean the collected user ids
-  pageData.users = pageData.users.map((user) => user.replace('@', '').trim())
-
-  // make next page absolute
-  if (pageData.nextPage) {
-    pageData.nextPage = 'https://leads-example-page.vercel.app/' + pageData.nextPage
+    // add all the new user profile links to the array
+    userProfiles.push(...data.users.map((user) => 'https://leads-example-page.vercel.app/user/' + user.replace('@ ', '')))
   }
 
-  return pageData
-}
+  // deduplicate the user profiles
+  const uniqueUserProfiles = [...new Set(userProfiles)]
 
-async function parseProfilePage(url) {
-  const extractRules = {
-    name: '.profile span.name',
-    role: '.profile span.role',
-    email: 'a[href^="mailto:"]@href'
-  }
-  const userData = await parseUrlWithRules(url, extractRules)
-
-  // clean the user email
-  userData.email = userData.email.replace('mailto:', '')
-
-  return userData
-}
-
-async function saveCsv(filename, data) {
-  // convert the data to a csv string and save it to a file
-  const csvContent = csv.stringify(data, { header: true })
-  await fs.writeFile(filename, csvContent, 'utf8')
-}
-
-(async () => {
-  const users = []
-
-  // start at the first lead page, then iterate until we no longer have a next page to follow
-  let nextPage = 'https://leads-example-page.vercel.app/'
-  while (nextPage) {
-    console.log(`Parsing ${nextPage}..`)
-    const data = await parseListPage(nextPage);
-    users.push(...data.users)
-    nextPage = data.nextPage
-  }
-
-  // deduplicate all users to make sure we only parse each profile once
-  const uniqueUsers = [...new Set(users)]
-  console.log(`\nFound ${uniqueUsers.length} unique leads..\n`)
-
-  // for testing demo purposes, to avoid burning too much credits, we limit the number of leads
-  const parseLeads = uniqueUsers.slice(0, LIMIT_LEADS)
-  console.log(`\nSelected ${parseLeads.length} leads for further parsing..\n`)
-
-  // now we parse each lead profile page
   const leads = []
-  for (const user of parseLeads) {
-    // clean the parsed id
-    const userId = user.replace('@', ' ')
-    const userProfileUrl = 'https://leads-example-page.vercel.app/user/' + userId
-    console.log(`Parsing ${userProfileUrl}..`)
-    const data = await parseProfilePage(userProfileUrl)
-    leads.push(data)
+  const MAX_LEADS = 3
+  for (let i = 0; i < MAX_LEADS && i < uniqueUserProfiles.length; i++) {
+    const profileUrl = uniqueUserProfiles[i]
+    const response = await client.get({
+      url: profileUrl,
+      params: {
+        render_js: false,
+        extract_rules: {
+          name: '.profile span.name',
+          role: '.profile span.role',
+          email: 'a[href^="mailto:"]@href'
+        }
+      }
+    })
+
+    const data = JSON.parse(textDecoder.decode(response.data))
+    leads.push({
+      name: data.name,
+      role: data.role,
+      email: data.email.replace('mailto:', '')
+    })
   }
 
-  const outputFilename = 'leads.csv'
-  await saveCsv(outputFilename, leads)
-  console.log(`Successfully parsed ${leads.length} leads and saved to ${outputFilename}`)
-})();
+  const csvContent = csv.stringify(leads, { header: true })
+  await fs.writeFile('leads.csv', csvContent, 'utf8')
+  console.log('Wrote leads to leads.csv')
+})()

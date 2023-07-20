@@ -6,17 +6,17 @@ The example site used is https://leads-example-page.vercel.app/.
 
 ## Running the example
 
-To run this example, you must first set your Scrapingbee API key as an environment variable or copy the `.env.example` to `.env` and update the variables inside.
+To run this example, you must first set your Scrapingbee API key as an environment variable or add it to a `.env` file.
 
 ```bash
-export SCRAPINGBEE_API_KEY="your key here"
-yarn install # or npm install
-yarn start # or npm start
+echo "SCRAPINGBEE_API_KEY=your-key" > .env
+npm install
+node scrape.js
 ```
 
 The scraped leads will be saved to an output csv file.
 
-To avoid using too many credits, a variable `SCRAPINGBEE_LIMIT_LEADS` can is defaulted to `5` leads. You can set this variable as well to scrape more leads.
+To avoid using too many credits, only 3 leads are scraped. This can be changed by updating the `MAX_LEADS` constant.
 
 ## Script explanation
 
