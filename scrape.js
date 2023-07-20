@@ -1,6 +1,7 @@
 require('dotenv').config();
 const scrapingbee = require('scrapingbee');
-const saveCsv = require('./lib/save-csv')
+const csv = require('csv-stringify/sync')
+const fs = require('fs/promises')
 
 const API_KEY = process.env.SCRAPINGBEE_API_KEY;
 
@@ -103,6 +104,12 @@ async function runScraper() {
   const outputFilename = 'leads.csv'
   await saveCsv(outputFilename, leads)
   console.log(`Successfully parsed ${leads.length} leads and saved to ${outputFilename}`)
+}
+
+async function saveCsv(filename, data) {
+  // convert the data to a csv string and save it to a file
+  const csvContent = csv.stringify(data, { header: true })
+  await fs.writeFile(filename, csvContent, 'utf8')
 }
 
 runScraper()
